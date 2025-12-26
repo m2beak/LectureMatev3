@@ -70,6 +70,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -77,6 +78,26 @@
 
 .glass {
   @apply bg-background/80 backdrop-blur-md border-b border-border/50;
+}
+
+/* User Requested Glassmorphism style */
+.glass-panel {
+  @apply backdrop-blur-[10px] border border-white/20;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Light mode specific adjustment for glass panel to be visible but readable */
+.dark .glass-panel {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* In light mode, white/0.1 on white is invisible. Use a dark tint or frost */
+:not(.dark) .glass-panel {
+  background-color: rgba(255, 255, 255, 0.7);
+  /* Frosty */
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .gradient-text {
@@ -110,20 +131,15 @@
   content: "";
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.7); /* Dark overlay */
+  background-color: rgba(0, 0, 0, 0.7);
+  /* Dark overlay */
   backdrop-filter: blur(4px);
-  z-index: -1; /* Behind content but in front of body background if needed, but mainly specific to container */
+  z-index: -1;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
 }
 
 .focus-mode.focus-active::before {
-   opacity: 1;
+  opacity: 1;
 }
-
-/* Actually, we applied the class to the container. Let's make sure the content pops out. 
-   The prompt asked for "dark, blurred backdrop to the rest of the page". 
-   Since we are expanding the main content, the 'rest' is effectively hidden or negligible. 
-   But let's add a global dark mode reinforcement.
-*/

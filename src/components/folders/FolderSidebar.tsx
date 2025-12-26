@@ -52,7 +52,7 @@ export const FolderSidebar = ({
   const canCreateFolder = folders.length < maxFolders;
 
   return (
-    <div className="w-64 border-r border-border bg-card/50 flex flex-col h-full">
+    <div className="w-64 border-r border-border glass-panel flex flex-col h-full">
       <div className="p-4 border-b border-border">
         <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">
           Folders

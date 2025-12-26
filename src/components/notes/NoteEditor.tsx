@@ -163,7 +163,7 @@ export const NoteEditor = ({
           />
 
           {/* Add Timestamp */}
-          <Card>
+          <Card className="glass-panel bg-transparent">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Clock className="w-4 h-4 text-primary" />
@@ -189,7 +189,7 @@ export const NoteEditor = ({
 
           {/* Timestamps List */}
           {note.timestamps.length > 0 && (
-            <Card>
+            <Card className="glass-panel bg-transparent">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Play className="w-4 h-4 text-accent" />
@@ -230,7 +230,7 @@ export const NoteEditor = ({
         {/* Notes Column */}
         <div className="space-y-4">
           {/* Tags */}
-          <Card>
+          <Card className="glass-panel bg-transparent">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Tag className="w-4 h-4 text-primary" />
@@ -267,7 +267,7 @@ export const NoteEditor = ({
           </Card>
 
           {/* Notes Editor */}
-          <Card className="flex-1">
+          <Card className="flex-1 glass-panel bg-transparent">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2">
