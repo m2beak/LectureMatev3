@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Moon, Sun, Settings } from "lucide-react";
+import { BookOpen, Moon, Sun, Settings, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useFocusMode } from "@/contexts/FocusContext";
 
 export const Header = () => {
   const [isDark, setIsDark] = useState(true);
+  const { isFocusMode, toggleFocusMode } = useFocusMode();
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     const shouldBeDark = savedTheme ? savedTheme === "dark" : true; // Default to dark
-    
+
     setIsDark(shouldBeDark);
     document.documentElement.classList.toggle("dark", shouldBeDark);
   }, []);
@@ -34,6 +36,20 @@ export const Header = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleFocusMode}
+            className="rounded-full"
+            title={isFocusMode ? "Exit Focus Mode" : "Enter Focus Mode"}
+          >
+            {isFocusMode ? (
+              <Minimize2 className="h-5 w-5" />
+            ) : (
+              <Maximize2 className="h-5 w-5" />
+            )}
+          </Button>
+
           <Button
             variant="ghost"
             size="icon"

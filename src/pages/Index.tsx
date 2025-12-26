@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFocusMode } from "@/contexts/FocusContext";
 import { useCloudNotes } from "@/hooks/useCloudNotes";
 import { Header } from "@/components/layout/Header";
 import { NotesList } from "@/components/notes/NotesList";
@@ -24,6 +25,7 @@ import {
   LogIn,
   Crown,
   Loader2,
+  Minimize2,
 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import { Button } from "@/components/ui/button";
@@ -54,6 +56,7 @@ const Index = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [activeTab, setActiveTab] = useState("notes");
+  const { isFocusMode, toggleFocusMode } = useFocusMode();
 
   const handleSelectNote = (note: VideoNote) => {
     setCurrentNote(note);
@@ -100,22 +103,38 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className={`min-h-screen bg-background flex transition-all duration-500 ease-in-out ${isFocusMode ? "focus-mode" : ""}`}>
       {user && (
-        <FolderSidebar
-          folders={folders}
-          selectedFolder={selectedFolder}
-          onSelectFolder={setSelectedFolder}
-          onCreateFolder={createFolder}
-          onDeleteFolder={deleteFolder}
-        />
+        <div className={`transition-all duration-500 ease-in-out ${isFocusMode ? "w-0 opacity-0 overflow-hidden" : "w-64 opacity-100"}`}>
+          <FolderSidebar
+            folders={folders}
+            selectedFolder={selectedFolder}
+            onSelectFolder={setSelectedFolder}
+            onCreateFolder={createFolder}
+            onDeleteFolder={deleteFolder}
+          />
+        </div>
       )}
-      
-      <div className="flex-1 flex flex-col">
-        <Header />
+
+      <div className="flex-1 flex flex-col relative">
+        {!isFocusMode && <Header />}
+
+        {/* Floating Exit Focus Mode Button */}
+        {isFocusMode && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={toggleFocusMode}
+            className="absolute top-4 right-4 z-50 shadow-lg animate-in fade-in zoom-in duration-300"
+          >
+            <Minimize2 className="w-4 h-4 mr-2" />
+            Exit Focus Mode
+          </Button>
+        )}
+
         <Toaster />
 
-        <main className="flex-1 container mx-auto px-4 py-8">
+        <main className={`flex-1 container mx-auto px-4 py-8 transition-all duration-500 ${isFocusMode ? "max-w-full px-6" : ""}`}>
           {!isEditing ? (
             <div className="space-y-8 animate-fade-in">
               {/* Hero Section */}
@@ -210,7 +229,7 @@ const Index = () => {
                       <section>
                         <div className="flex items-center justify-between mb-6">
                           <h2 className="text-2xl font-bold">
-                            {selectedFolder 
+                            {selectedFolder
                               ? folders.find(f => f.id === selectedFolder)?.name || 'Notes'
                               : 'All Notes'}
                           </h2>
