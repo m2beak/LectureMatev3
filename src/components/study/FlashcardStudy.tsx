@@ -16,7 +16,7 @@ import {
   Loader2,
   RefreshCw,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { generateJSONContent } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 import { generateId } from "@/lib/storage";
 
@@ -60,24 +60,17 @@ Timestamps: ${note.timestamps.map((t) => `${t.label}`).join(", ")}
 Tags: ${note.tags.join(", ")}
       `.trim();
 
-      const { data, error } = await supabase.functions.invoke("ai-explain", {
-        body: { text: contentForAI, type: "flashcards" },
-      });
+      const systemPrompt = "You are an expert educator who creates effective study flashcards. Generate exactly 3 distinct Question & Answer pairs in JSON format only.";
+      const userPrompt = `${systemPrompt}\n\nBased on these notes, generate 3 unique and distinct flashcards for studying. Return ONLY a JSON array with objects containing "question" and "answer" fields. No other text (no markdown code blocks, just raw JSON).\n\nNotes:\n${contentForAI}`;
 
-      if (error) throw error;
+      const jsonStr = await generateJSONContent(userPrompt);
 
       // Parse the JSON response
       let flashcardsData: Array<{ question: string; answer: string }>;
       try {
-        // Extract JSON from the response (handle markdown code blocks)
-        let jsonStr = data.content;
-        const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (jsonMatch) {
-          jsonStr = jsonMatch[1];
-        }
         flashcardsData = JSON.parse(jsonStr.trim());
       } catch {
-        console.error("Failed to parse flashcards:", data.content);
+        console.error("Failed to parse flashcards:", jsonStr);
         throw new Error("Failed to parse AI response");
       }
 
@@ -113,8 +106,8 @@ Tags: ${note.tags.join(", ")}
   };
 
   const currentCard = session.cards[session.currentIndex];
-  const progress = session.cards.length > 0 
-    ? ((session.currentIndex + 1) / session.cards.length) * 100 
+  const progress = session.cards.length > 0
+    ? ((session.currentIndex + 1) / session.cards.length) * 100
     : 0;
 
   const handleFlip = () => {
@@ -231,9 +224,8 @@ Tags: ${note.tags.join(", ")}
       {/* Flashcard */}
       <div className="perspective-1000">
         <Card
-          className={`min-h-[300px] cursor-pointer transition-all duration-500 transform-style-preserve-3d relative ${
-            isFlipped ? "rotate-y-180" : ""
-          }`}
+          className={`min-h-[300px] cursor-pointer transition-all duration-500 transform-style-preserve-3d relative ${isFlipped ? "rotate-y-180" : ""
+            }`}
           onClick={handleFlip}
         >
           {/* Front */}

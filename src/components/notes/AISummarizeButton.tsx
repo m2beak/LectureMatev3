@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileText, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { generateAIContent } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 import { VideoNote } from "@/types/note";
 
@@ -42,15 +42,11 @@ Timestamps: ${note.timestamps.map((t) => `[${t.label}]`).join(", ")}
 Tags: ${note.tags.join(", ")}
       `.trim();
 
-      const { data, error } = await supabase.functions.invoke("ai-explain", {
-        body: {
-          text: contentForAI,
-          type: "summarize",
-        },
-      });
+      const systemPrompt = "You are an expert at summarizing content. Create clear, concise summaries using bullet points. Avoid big blocks of text.";
+      const userPrompt = `${systemPrompt}\n\nSummarize the following notes into key bullet points:\n\n${contentForAI}`;
 
-      if (error) throw error;
-      setSummary(data.content);
+      const content = await generateAIContent(userPrompt);
+      setSummary(content);
     } catch (error) {
       console.error("AI summarize error:", error);
       toast({

@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Sparkles, Loader2, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { generateAIContent } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 
 interface AIExplainButtonProps {
@@ -38,16 +38,13 @@ export const AIExplainButton = ({ selectedText, noteContext }: AIExplainButtonPr
     setExplanation("");
 
     try {
-      const { data, error } = await supabase.functions.invoke("ai-explain", {
-        body: {
-          text: textToProcess,
-          context: selectedText ? noteContext : undefined, // Send context only if explaining a specific selection
-          type: "explain",
-        },
-      });
+      const systemPrompt = "You are an expert educator. Explain concepts clearly and concisely. Use examples when helpful. Keep explanations focused and under 200 words.";
+      const userPrompt = noteContext && selectedText
+        ? `${systemPrompt}\n\nExplain this text in simple terms:\n\n"${textToProcess}"\n\nContext from the video notes: ${noteContext}`
+        : `${systemPrompt}\n\nExplain this text in simple terms:\n\n"${textToProcess}"`;
 
-      if (error) throw error;
-      setExplanation(data.content);
+      const content = await generateAIContent(userPrompt);
+      setExplanation(content);
     } catch (error) {
       console.error("AI explanation error:", error);
       toast({

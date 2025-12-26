@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BrainCircuit, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { generateJSONContent } from "@/lib/gemini";
 import { useToast } from "@/hooks/use-toast";
 import { QuizModal, QuizQuestion } from "./QuizModal";
 
@@ -27,23 +27,18 @@ export const QuizMeButton = ({ content }: QuizMeButtonProps) => {
         setIsLoading(true);
 
         try {
-            const { data, error } = await supabase.functions.invoke("ai-explain", {
-                body: {
-                    text: content,
-                    type: "quiz",
-                },
-            });
+            const systemPrompt = "You are an expert quiz creator. Generate multiple-choice questions in JSON format only.";
+            const userPrompt = `${systemPrompt}\n\nBased on the following text, generate 3 multiple-choice questions. Return ONLY a JSON array with objects containing "question", "options" (array of 4 strings), and "answer" (the correct string from options) fields. No other text (no markdown code blocks, just raw JSON).\n\nText:\n${content}`;
 
-            if (error) throw error;
-
-            console.log("Quiz data:", data.content);
+            const jsonStr = await generateJSONContent(userPrompt);
+            console.log("Quiz data:", jsonStr);
 
             let parsedQuestions: QuizQuestion[] = [];
             try {
-                parsedQuestions = JSON.parse(data.content);
+                parsedQuestions = JSON.parse(jsonStr);
                 if (!Array.isArray(parsedQuestions)) throw new Error("Response is not an array");
             } catch (parseError) {
-                console.error("Failed to parse quiz JSON:", data.content);
+                console.error("Failed to parse quiz JSON:", jsonStr);
                 throw new Error("Failed to parse quiz questions from AI response");
             }
 
