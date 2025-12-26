@@ -128,7 +128,7 @@ serve(async (req) => {
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     // Use the flash model for speed and efficiency
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     let systemPrompt = "";
     let userPrompt = "";
