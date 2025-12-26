@@ -81,23 +81,21 @@
 }
 
 /* User Requested Glassmorphism style */
+/* User Requested Glassmorphism style - Optimized */
 .glass-panel {
-  @apply backdrop-blur-[10px] border border-white/20;
-  background-color: rgba(255, 255, 255, 0.1);
+  @apply backdrop-blur-xl border border-border/50;
+  background-color: hsl(var(--background) / 0.6);
 }
 
-/* Light mode specific adjustment for glass panel to be visible but readable */
 .dark .glass-panel {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.1);
+  background-color: hsl(var(--background) / 0.6);
+  border-color: hsl(var(--border) / 0.5);
 }
 
-/* In light mode, white/0.1 on white is invisible. Use a dark tint or frost */
 :not(.dark) .glass-panel {
-  background-color: rgba(255, 255, 255, 0.7);
-  /* Frosty */
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background-color: hsl(var(--background) / 0.7);
+  border-color: hsl(var(--border) / 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .gradient-text {

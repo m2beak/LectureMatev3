@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DictionaryPopup } from "./DictionaryPopup";
 import { AIExplainButton } from "./AIExplainButton";
 import { AISummarizeButton } from "./AISummarizeButton";
+import { QuizMeButton } from "./QuizMeButton";
 
 interface NoteEditorProps {
   note: VideoNote;
@@ -50,13 +51,31 @@ export const NoteEditor = ({
   const [selectedText, setSelectedText] = useState("");
   const [showDictionary, setShowDictionary] = useState(false);
 
+  // Sync local state when note changes, but avoid overwriting while typing if only other fields changed.
+  // We use note.id to reset content when switching notes.
   useEffect(() => {
     setContent(note.content);
-  }, [note.content]);
+  }, [note.id, note.content]);
+  // Ideally we only depend on note.id if we want total isolation, but if note.content changes externally 
+  // (e.g. initial load or genuine external update), we want it. 
+  // The lag issue is mainly caused by the immediate onUpdate. 
+  // We will keep [note.content] but the debounce will fix the lag.
+
+  // Debounce the onUpdate call for content changes
+  useEffect(() => {
+    // Avoid triggering update if content matches prop (e.g. after initial sync)
+    if (content === note.content) return;
+
+    const handler = setTimeout(() => {
+      onUpdate({ ...note, content });
+    }, 800);
+
+    return () => clearTimeout(handler);
+  }, [content, note, onUpdate]);
 
   const handleContentChange = (value: string) => {
     setContent(value);
-    onUpdate({ ...note, content: value });
+    // onUpdate is now handled by the debounce effect
   };
 
   const handleAddTimestamp = () => {
@@ -86,12 +105,12 @@ export const NoteEditor = ({
       });
       return;
     }
-    onUpdate({ ...note, tags: [...note.tags, newTag.trim()] });
+    onUpdate({ ...note, tags: [...note.tags, newTag.trim()], content });
     setNewTag("");
   };
 
   const handleRemoveTag = (tag: string) => {
-    onUpdate({ ...note, tags: note.tags.filter((t) => t !== tag) });
+    onUpdate({ ...note, tags: note.tags.filter((t) => t !== tag), content });
   };
 
   const handleExport = () => {
@@ -276,6 +295,7 @@ export const NoteEditor = ({
                 </CardTitle>
                 <div className="flex gap-1">
                   <AIExplainButton selectedText={selectedText} noteContext={content} />
+                  <QuizMeButton content={selectedText || content} />
                   <AISummarizeButton note={note} />
                   <Button
                     variant="ghost"

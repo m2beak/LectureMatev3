@@ -10,7 +10,7 @@ const corsHeaders = {
 // Input validation constants
 const MAX_TEXT_LENGTH = 10000;
 const MAX_CONTEXT_LENGTH = 5000;
-const VALID_TYPES = ['explain', 'summarize', 'flashcards'] as const;
+const VALID_TYPES = ['explain', 'summarize', 'flashcards', 'quiz'] as const;
 
 type RequestType = typeof VALID_TYPES[number];
 
@@ -143,6 +143,9 @@ serve(async (req) => {
     } else if (type === "flashcards") {
       systemPrompt = "You are an expert educator who creates effective study flashcards. Generate flashcards in JSON format only.";
       userPrompt = `${systemPrompt}\n\nBased on these notes, generate 5-8 flashcards for studying. Return ONLY a JSON array with objects containing "question" and "answer" fields. No other text (no markdown code blocks, just raw JSON).\n\nNotes:\n${text}`;
+    } else if (type === "quiz") {
+      systemPrompt = "You are an expert quiz creator. Generate multiple-choice questions in JSON format only.";
+      userPrompt = `${systemPrompt}\n\nBased on the following text, generate 3 multiple-choice questions. Return ONLY a JSON array with objects containing "question", "options" (array of 4 strings), and "answer" (the correct string from options) fields. No other text (no markdown code blocks, just raw JSON).\n\nText:\n${text}`;
     }
 
     console.log(`AI request - user: ${user.id}, type: ${type}, text length: ${text?.length || 0}`);
@@ -154,7 +157,7 @@ serve(async (req) => {
     console.log(`AI response - user: ${user.id}, content length: ${content?.length || 0}`);
 
     // Cleanup JSON response for flashcards if it keeps markdown formatting
-    if (type === "flashcards") {
+    if (type === "flashcards" || type === "quiz") {
       content = content.replace(/```json\n|\n```/g, "").trim();
     }
 
