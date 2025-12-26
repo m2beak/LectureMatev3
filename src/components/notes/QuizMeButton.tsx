@@ -67,6 +67,7 @@ export const QuizMeButton = ({ content }: QuizMeButtonProps) => {
                 variant="ghost"
                 size="sm"
                 onClick={handleQuiz}
+                onMouseDown={(e) => e.preventDefault()}
                 disabled={isLoading}
             >
                 {isLoading ? (

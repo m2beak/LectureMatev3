@@ -22,10 +22,13 @@ export const AIExplainButton = ({ selectedText, noteContext }: AIExplainButtonPr
   const [explanation, setExplanation] = useState("");
 
   const handleExplain = async () => {
-    if (!selectedText.trim()) {
+    // Smart fallback: Use selected text OR full note context
+    const textToProcess = selectedText.trim() || noteContext?.trim();
+
+    if (!textToProcess) {
       toast({
-        title: "Select text first",
-        description: "Highlight some text to get an AI explanation.",
+        title: "No content",
+        description: "Add some notes first to get an AI explanation.",
       });
       return;
     }
@@ -37,8 +40,8 @@ export const AIExplainButton = ({ selectedText, noteContext }: AIExplainButtonPr
     try {
       const { data, error } = await supabase.functions.invoke("ai-explain", {
         body: {
-          text: selectedText,
-          context: noteContext,
+          text: textToProcess,
+          context: selectedText ? noteContext : undefined, // Send context only if explaining a specific selection
           type: "explain",
         },
       });
@@ -60,7 +63,12 @@ export const AIExplainButton = ({ selectedText, noteContext }: AIExplainButtonPr
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={handleExplain}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleExplain}
+        onMouseDown={(e) => e.preventDefault()} // Prevent editor blur
+      >
         <Sparkles className="w-4 h-4 mr-1" />
         AI Explain
       </Button>

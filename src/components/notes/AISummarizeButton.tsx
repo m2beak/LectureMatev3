@@ -66,7 +66,7 @@ Tags: ${note.tags.join(", ")}
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={handleSummarize}>
+      <Button variant="ghost" size="sm" onClick={handleSummarize} onMouseDown={(e) => e.preventDefault()}>
         <FileText className="w-4 h-4 mr-1" />
         Summarize
       </Button>

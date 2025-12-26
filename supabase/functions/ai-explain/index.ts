@@ -1,3 +1,4 @@
+// Deno environment - imports are URLs
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3";
@@ -138,11 +139,11 @@ serve(async (req) => {
         ? `${systemPrompt}\n\nExplain this text in simple terms:\n\n"${text}"\n\nContext from the video notes: ${context}`
         : `${systemPrompt}\n\nExplain this text in simple terms:\n\n"${text}"`;
     } else if (type === "summarize") {
-      systemPrompt = "You are an expert at summarizing content. Create clear, bullet-point summaries that capture key points.";
+      systemPrompt = "You are an expert at summarizing content. Create clear, concise summaries using bullet points. Avoid big blocks of text.";
       userPrompt = `${systemPrompt}\n\nSummarize the following notes into key bullet points:\n\n${text}`;
     } else if (type === "flashcards") {
-      systemPrompt = "You are an expert educator who creates effective study flashcards. Generate flashcards in JSON format only.";
-      userPrompt = `${systemPrompt}\n\nBased on these notes, generate 5-8 flashcards for studying. Return ONLY a JSON array with objects containing "question" and "answer" fields. No other text (no markdown code blocks, just raw JSON).\n\nNotes:\n${text}`;
+      systemPrompt = "You are an expert educator who creates effective study flashcards. Generate exactly 3 distinct Question & Answer pairs in JSON format only.";
+      userPrompt = `${systemPrompt}\n\nBased on these notes, generate 3 unique and distinct flashcards for studying. Return ONLY a JSON array with objects containing "question" and "answer" fields. No other text (no markdown code blocks, just raw JSON).\n\nNotes:\n${text}`;
     } else if (type === "quiz") {
       systemPrompt = "You are an expert quiz creator. Generate multiple-choice questions in JSON format only.";
       userPrompt = `${systemPrompt}\n\nBased on the following text, generate 3 multiple-choice questions. Return ONLY a JSON array with objects containing "question", "options" (array of 4 strings), and "answer" (the correct string from options) fields. No other text (no markdown code blocks, just raw JSON).\n\nText:\n${text}`;
