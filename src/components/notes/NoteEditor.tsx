@@ -19,7 +19,9 @@ import {
   Trash2,
   Brain,
   ChevronDown,
+  Save,
 } from "lucide-react";
+import confetti from "canvas-confetti";
 import { formatTime, exportToMarkdown } from "@/lib/storage";
 import { exportToPDF } from "@/lib/pdf-export";
 import {
@@ -160,6 +162,27 @@ export const NoteEditor = ({
     }
   };
 
+  const handleSave = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Trigger confetti from button position
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x, y },
+      colors: ['#FFD700', '#FFA500', '#FF4500', '#32CD32', '#1E90FF']
+    });
+
+    onUpdate({ ...note, content });
+
+    toast({
+      title: "Saved!",
+      description: "Your notes have been saved.",
+    });
+  };
+
   return (
     <div className="animate-slide-up space-y-6">
       {/* Header */}
@@ -182,9 +205,9 @@ export const NoteEditor = ({
             <Copy className="w-4 h-4 mr-2" />
             Copy
           </Button>
-          <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
-            <Copy className="w-4 h-4 mr-2" />
-            Copy
+          <Button variant="outline" size="sm" onClick={handleSave}>
+            <Save className="w-4 h-4 mr-2" />
+            Save
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

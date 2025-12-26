@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import confetti from "canvas-confetti";
 import {
     Dialog,
     DialogContent,
@@ -24,6 +25,17 @@ interface QuizModalProps {
 export const QuizModal = ({ isOpen, onClose, questions }: QuizModalProps) => {
     const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
     const [showResults, setShowResults] = useState<Record<number, boolean>>({});
+
+    useEffect(() => {
+        if (questions.length > 0 && Object.keys(showResults).length === questions.length) {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { x: 0.5, y: 0.5 },
+                colors: ['#FFD700', '#FFA500', '#FF4500', '#32CD32', '#1E90FF']
+            });
+        }
+    }, [showResults, questions.length]);
 
     const handleOptionClick = (questionIndex: number, option: string) => {
         if (showResults[questionIndex]) return; // Prevent changing after revealing
