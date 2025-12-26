@@ -18,8 +18,16 @@ import {
   Play,
   Trash2,
   Brain,
+  ChevronDown,
 } from "lucide-react";
 import { formatTime, exportToMarkdown } from "@/lib/storage";
+import { exportToPDF } from "@/lib/pdf-export";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { DictionaryPopup } from "./DictionaryPopup";
 import { AIExplainButton } from "./AIExplainButton";
@@ -113,7 +121,7 @@ export const NoteEditor = ({
     onUpdate({ ...note, tags: note.tags.filter((t) => t !== tag), content });
   };
 
-  const handleExport = () => {
+  const handleExportMarkdown = () => {
     const markdown = exportToMarkdown(note);
     const blob = new Blob([markdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
@@ -123,8 +131,16 @@ export const NoteEditor = ({
     a.click();
     URL.revokeObjectURL(url);
     toast({
-      title: "Exported",
+      title: "Exported Markdown",
       description: "Notes exported to Markdown file.",
+    });
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF(note);
+    toast({
+      title: "Exported PDF",
+      description: "Notes exported to PDF file.",
     });
   };
 
@@ -166,10 +182,27 @@ export const NoteEditor = ({
             <Copy className="w-4 h-4 mr-2" />
             Copy
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
+          <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+                <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportMarkdown}>
+                Export to Markdown (.md)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                Export to PDF (.pdf)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
