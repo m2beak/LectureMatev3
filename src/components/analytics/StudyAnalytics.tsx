@@ -36,7 +36,8 @@ export const StudyAnalytics = () => {
           .from('study_sessions')
           .select('*')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(1000);
 
         if (error) throw error;
 
@@ -45,31 +46,32 @@ export const StudyAnalytics = () => {
           const totalCardsStudied = data.reduce((acc, s) => acc + s.cards_studied, 0);
           const totalCorrect = data.reduce((acc, s) => acc + s.correct_answers, 0);
           const totalDuration = data.reduce((acc, s) => acc + s.duration_seconds, 0);
-          
+
           // Calculate streak
           let streak = 0;
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
+
           const sortedDates = data
             .map(s => new Date(s.created_at))
+            .filter(d => !isNaN(d.getTime()))
             .sort((a, b) => b.getTime() - a.getTime());
-          
+
           if (sortedDates.length > 0) {
             const lastDate = new Date(sortedDates[0]);
             lastDate.setHours(0, 0, 0, 0);
-            
+
             const daysDiff = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-            
+
             if (daysDiff <= 1) {
               streak = 1;
               let currentDate = lastDate;
-              
+
               for (let i = 1; i < sortedDates.length; i++) {
                 const prevDate = new Date(sortedDates[i]);
                 prevDate.setHours(0, 0, 0, 0);
                 const diff = Math.floor((currentDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-                
+
                 if (diff === 1) {
                   streak++;
                   currentDate = prevDate;
@@ -99,7 +101,7 @@ export const StudyAnalytics = () => {
     fetchStats();
   }, [user]);
 
-  const accuracy = stats.totalCardsStudied > 0 
+  const accuracy = stats.totalCardsStudied > 0
     ? Math.round((stats.totalCorrect / stats.totalCardsStudied) * 100)
     : 0;
 
@@ -121,7 +123,7 @@ export const StudyAnalytics = () => {
             Premium
           </Badge>
         </div>
-        
+
         <div className="relative">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 blur-sm pointer-events-none">
             {[1, 2, 3, 4].map((i) => (
