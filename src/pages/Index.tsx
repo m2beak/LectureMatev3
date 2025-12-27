@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFocusMode } from "@/contexts/FocusContext";
@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, isPremium, signOut, profile } = useAuth();
+  const { user, isLoading: authLoading, isPremium, profile } = useAuth();
   const {
     notes,
     allNotes,
@@ -53,8 +53,10 @@ const Index = () => {
     setSelectedFolder,
     isLoading,
   } = useCloudNotes();
+
   const [isEditing, setIsEditing] = useState(false);
   const [isStudyMode, setIsStudyMode] = useState(false);
+  // Default to "notes" to prevent empty states
   const [activeTab, setActiveTab] = useState("notes");
   const { isFocusMode, toggleFocusMode } = useFocusMode();
 
@@ -105,7 +107,7 @@ const Index = () => {
   return (
     <div className={`min-h-screen bg-background flex transition-all duration-500 ease-in-out ${isFocusMode ? "focus-mode" : ""}`}>
       {user && (
-        <div className={`transition-all duration-500 ease-in-out ${isFocusMode ? "w-0 opacity-0 overflow-hidden" : "w-64 opacity-100"}`}>
+        <div className={`transition-all duration-500 ease-in-out border-r border-border ${isFocusMode ? "w-0 opacity-0 overflow-hidden" : "w-64 opacity-100"}`}>
           <FolderSidebar
             folders={folders}
             selectedFolder={selectedFolder}
@@ -116,7 +118,7 @@ const Index = () => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col relative">
+      <div className="flex-1 flex flex-col relative h-screen overflow-hidden">
         {!isFocusMode && <Header />}
 
         {/* Floating Exit Focus Mode Button */}
@@ -134,9 +136,9 @@ const Index = () => {
 
         <Toaster />
 
-        <main className={`flex-1 container mx-auto px-4 py-8 transition-all duration-500 ${isFocusMode ? "max-w-full px-6" : ""}`}>
+        <main className={`flex-1 overflow-y-auto container mx-auto px-4 py-8 transition-all duration-500 ${isFocusMode ? "max-w-full px-6" : ""}`}>
           {!isEditing ? (
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-8 animate-fade-in pb-10">
               {/* Hero Section */}
               <section className="text-center py-12 relative">
                 <div className="absolute inset-0 gradient-bg opacity-5 blur-3xl" />
@@ -177,95 +179,90 @@ const Index = () => {
               </section>
 
               {user ? (
-                <>
-                  {/* Tabs for Notes / Analytics */}
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-                      <TabsTrigger value="notes">My Notes</TabsTrigger>
-                      <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                    </TabsList>
+                <Tabs
+                  value={activeTab}
+                  onValueChange={(val) => setActiveTab(val)}
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+                    <TabsTrigger value="notes">My Notes</TabsTrigger>
+                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                  </TabsList>
 
-                    <TabsContent value="notes" className="space-y-8 mt-8">
-                      {/* Stats Section */}
-                      {allNotes.length > 0 && (
-                        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <StatsCard
-                            title="Total Notes"
-                            value={allNotes.length}
-                            icon={BookOpen}
-                            description="Video notes created"
-                            iconClassName="bg-primary/10 text-primary"
-                          />
-                          <StatsCard
-                            title="Timestamps"
-                            value={totalTimestamps}
-                            icon={Clock}
-                            description="Saved moments"
-                            iconClassName="bg-accent/20 text-accent-foreground"
-                          />
-                          <StatsCard
-                            title="Unique Tags"
-                            value={totalTags}
-                            icon={Tag}
-                            description="Categories used"
-                            iconClassName="bg-green-500/20 text-green-600"
-                          />
-                          <StatsCard
-                            title="Folders"
-                            value={folders.length}
-                            icon={Play}
-                            description="Organized collections"
-                            iconClassName="bg-purple-500/20 text-purple-600"
-                          />
-                        </section>
-                      )}
-
-                      {/* Premium Banner */}
-                      {!isPremium && allNotes.length > 2 && (
-                        <PremiumBanner variant="compact" />
-                      )}
-
-                      {/* Notes List */}
-                      <section>
-                        <div className="flex items-center justify-between mb-6">
-                          <h2 className="text-2xl font-bold">
-                            {selectedFolder
-                              ? folders.find(f => f.id === selectedFolder)?.name || 'Notes'
-                              : 'All Notes'}
-                          </h2>
-                          {allNotes.length > 0 && (
-                            <AddVideoDialog onAddVideo={handleAddVideo} />
-                          )}
-                        </div>
-                        {isLoading ? (
-                          <div className="flex justify-center py-12">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                          </div>
-                        ) : (
-                          <NotesList
-                            notes={notes}
-                            currentNote={currentNote}
-                            onSelectNote={handleSelectNote}
-                            onDeleteNote={removeNote}
-                            searchQuery={searchQuery}
-                            onSearchChange={setSearchQuery}
-                          />
-                        )}
+                  <TabsContent value="notes" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Stats Section */}
+                    {allNotes.length > 0 && (
+                      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatsCard
+                          title="Total Notes"
+                          value={allNotes.length}
+                          icon={BookOpen}
+                          description="Video notes created"
+                          iconClassName="bg-primary/10 text-primary"
+                        />
+                        <StatsCard
+                          title="Timestamps"
+                          value={totalTimestamps}
+                          icon={Clock}
+                          description="Saved moments"
+                          iconClassName="bg-accent/20 text-accent-foreground"
+                        />
+                        <StatsCard
+                          title="Unique Tags"
+                          value={totalTags}
+                          icon={Tag}
+                          description="Categories used"
+                          iconClassName="bg-green-500/20 text-green-600"
+                        />
+                        <StatsCard
+                          title="Folders"
+                          value={folders.length}
+                          icon={Play}
+                          description="Organized collections"
+                          iconClassName="bg-purple-500/20 text-purple-600"
+                        />
                       </section>
-                    </TabsContent>
+                    )}
 
-                    <TabsContent value="analytics" className="mt-8">
-                      <StudyAnalytics />
-                      {!isPremium && (
-                        <div className="mt-8">
-                          <PremiumBanner />
+                    {!isPremium && allNotes.length > 2 && (
+                      <PremiumBanner variant="compact" />
+                    )}
+
+                    <section>
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold">
+                          {selectedFolder
+                            ? folders.find(f => f.id === selectedFolder)?.name || 'Notes'
+                            : 'All Notes'}
+                        </h2>
+                      </div>
+                      {isLoading ? (
+                        <div className="flex justify-center py-12">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         </div>
+                      ) : (
+                        <NotesList
+                          notes={notes}
+                          currentNote={currentNote}
+                          onSelectNote={handleSelectNote}
+                          onDeleteNote={removeNote}
+                          searchQuery={searchQuery}
+                          onSearchChange={setSearchQuery}
+                        />
                       )}
-                    </TabsContent>
-                  </Tabs>
-                </>
+                    </section>
+                  </TabsContent>
+
+                  <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <StudyAnalytics />
+                    {!isPremium && (
+                      <div className="mt-8">
+                        <PremiumBanner />
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               ) : (
-                /* Features Section for non-logged-in users */
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-6 py-8">
                   <FeatureCard
                     icon={Youtube}
@@ -286,26 +283,6 @@ const Index = () => {
                     icon={Zap}
                     title="AI Explanations"
                     description="Get instant AI explanations for any text you select."
-                  />
-                  <FeatureCard
-                    icon={BookOpen}
-                    title="Cloud Sync"
-                    description="Access your notes from any device with cloud synchronization."
-                  />
-                  <FeatureCard
-                    icon={Tag}
-                    title="Folder Organization"
-                    description="Organize notes into folders for easy management."
-                  />
-                  <FeatureCard
-                    icon={Shield}
-                    title="Export Options"
-                    description="Export to Markdown, JSON, or Anki flashcards."
-                  />
-                  <FeatureCard
-                    icon={Crown}
-                    title="Premium Features"
-                    description="Unlimited AI, analytics, and collaboration tools."
                   />
                 </section>
               )}
