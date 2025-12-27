@@ -8,8 +8,8 @@ const getGeminiModel = () => {
         throw new Error("VITE_GEMINI_API_KEY is not set in environment variables");
     }
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Explicitly using gemini-1.5-flash as requested
-    return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Switching to gemini-pro as requested due to 404 with flash
+    return genAI.getGenerativeModel({ model: "gemini-pro" });
 };
 
 export const generateAIContent = async (prompt: string): Promise<string> => {
