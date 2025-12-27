@@ -352,7 +352,7 @@ export const NoteEditor = ({
                 <div className="flex gap-1">
                   <AIExplainButton selectedText={selectedText} noteContext={content} />
                   <QuizMeButton content={selectedText || content} />
-                  <AISummarizeButton note={note} />
+                  <AISummarizeButton note={note} selectedText={selectedText} />
                   <Button
                     variant="ghost"
                     size="sm"

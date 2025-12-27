@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, Loader2, X } from "lucide-react";
-import { generateAIContent } from "@/lib/gemini";
-import { useToast } from "@/hooks/use-toast";
+import { Sparkles, Loader2 } from "lucide-react";
+import { generateAIContent } from "@/utils/gemini";
+import { toast } from "sonner";
 
 interface AIExplainButtonProps {
   selectedText: string;
@@ -16,19 +16,18 @@ interface AIExplainButtonProps {
 }
 
 export const AIExplainButton = ({ selectedText, noteContext }: AIExplainButtonProps) => {
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [explanation, setExplanation] = useState("");
 
   const handleExplain = async () => {
-    // Smart fallback: Use selected text OR full note context
-    const textToProcess = selectedText.trim() || noteContext?.trim();
+    // Smart fallback: Use selected text OR full note context if it's short enough to look like a query?
+    // User request: "If nothing is highlighted, ask the user to 'Highlight text to explain'."
+    const textToProcess = selectedText.trim();
 
     if (!textToProcess) {
-      toast({
-        title: "No content",
-        description: "Add some notes first to get an AI explanation.",
+      toast.info("Highlight text to explain", {
+        description: "Please highlight specific text in your notes for the AI to explain.",
       });
       return;
     }
@@ -37,20 +36,23 @@ export const AIExplainButton = ({ selectedText, noteContext }: AIExplainButtonPr
     setIsLoading(true);
     setExplanation("");
 
+    // Show loading toast
+    const toastId = toast.loading("Thinking...");
+
     try {
-      const systemPrompt = "You are an expert educator. Explain concepts clearly and concisely. Use examples when helpful. Keep explanations focused and under 200 words.";
-      const userPrompt = noteContext && selectedText
-        ? `${systemPrompt}\n\nExplain this text in simple terms:\n\n"${textToProcess}"\n\nContext from the video notes: ${noteContext}`
-        : `${systemPrompt}\n\nExplain this text in simple terms:\n\n"${textToProcess}"`;
+      const systemPrompt = "You are an expert educator. Return a short, 2-sentence definition of the concept. Be clear and concise.";
+      const userPrompt = noteContext
+        ? `${systemPrompt}\n\nExplain this text:\n\n"${textToProcess}"\n\nContext from video notes: ${noteContext}`
+        : `${systemPrompt}\n\nExplain this text:\n\n"${textToProcess}"`;
 
       const content = await generateAIContent(userPrompt);
       setExplanation(content);
+      toast.success("Success", { id: toastId });
     } catch (error) {
       console.error("AI explanation error:", error);
-      toast({
-        title: "Explanation failed",
+      toast.error("Explanation failed", {
         description: error instanceof Error ? error.message : "Failed to get explanation",
-        variant: "destructive",
+        id: toastId,
       });
       setIsOpen(false);
     } finally {
@@ -87,11 +89,14 @@ export const AIExplainButton = ({ selectedText, noteContext }: AIExplainButtonPr
 
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground animate-pulse">Consulting the knowledge base...</span>
+                </div>
               </div>
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p className="whitespace-pre-wrap">{explanation}</p>
+                <p className="whitespace-pre-wrap text-lg leading-relaxed">{explanation}</p>
               </div>
             )}
           </div>

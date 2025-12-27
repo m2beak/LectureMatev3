@@ -7,25 +7,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileText, Loader2 } from "lucide-react";
-import { generateAIContent } from "@/lib/gemini";
-import { useToast } from "@/hooks/use-toast";
+import { generateAIContent } from "@/utils/gemini";
+import { toast } from "sonner";
 import { VideoNote } from "@/types/note";
 
 interface AISummarizeButtonProps {
   note: VideoNote;
+  selectedText?: string;
 }
 
-export const AISummarizeButton = ({ note }: AISummarizeButtonProps) => {
-  const { toast } = useToast();
+export const AISummarizeButton = ({ note, selectedText }: AISummarizeButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState("");
 
   const handleSummarize = async () => {
-    if (!note.content.trim() && note.timestamps.length === 0) {
-      toast({
-        title: "No content",
-        description: "Add some notes or timestamps first to summarize.",
+    const textToSummarize = selectedText?.trim() || note.content.trim();
+
+    if (!textToSummarize && note.timestamps.length === 0) {
+      toast.error("No content", {
+        description: "Add some notes or keywords first to summarize.",
       });
       return;
     }
@@ -34,25 +35,39 @@ export const AISummarizeButton = ({ note }: AISummarizeButtonProps) => {
     setIsLoading(true);
     setSummary("");
 
+    // Show loading toast
+    const toastId = toast.loading("Thinking...");
+
     try {
-      const contentForAI = `
+      // If we have selected text, just summarize that.
+      // If not, we summarize the note context + timestamps + tags.
+      let promptContent = "";
+
+      if (selectedText?.trim()) {
+        promptContent = `Selected Text: ${selectedText}`;
+      } else {
+        promptContent = `
 Video: ${note.videoTitle}
 Notes: ${note.content}
 Timestamps: ${note.timestamps.map((t) => `[${t.label}]`).join(", ")}
 Tags: ${note.tags.join(", ")}
-      `.trim();
+        `.trim();
+      }
 
-      const systemPrompt = "You are an expert at summarizing content. Create clear, concise summaries using bullet points. Avoid big blocks of text.";
-      const userPrompt = `${systemPrompt}\n\nSummarize the following notes into key bullet points:\n\n${contentForAI}`;
+      const systemPrompt = "You are an expert at summarizing content. Create a clean HTML bulleted list (<ul> with <li>) of the key points. Do not include markdown code blocks, just the HTML.";
+      const userPrompt = `${systemPrompt}\n\nSummarize the following into key bullet points:\n\n${promptContent}`;
 
       const content = await generateAIContent(userPrompt);
-      setSummary(content);
+      // Remove any markdown code blocks if present
+      const cleanContent = content.replace(/```html|```/g, "").trim();
+
+      setSummary(cleanContent);
+      toast.success("Success", { id: toastId });
     } catch (error) {
       console.error("AI summarize error:", error);
-      toast({
-        title: "Summarization failed",
-        description: error instanceof Error ? error.message : "Failed to summarize notes",
-        variant: "destructive",
+      toast.error("Summarization failed", {
+        description: error instanceof Error ? error.message : "Failed to summarize",
+        id: toastId,
       });
       setIsOpen(false);
     } finally {
@@ -79,12 +94,16 @@ Tags: ${note.tags.join(", ")}
           <div className="space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground animate-pulse">Generating summary...</span>
+                </div>
               </div>
             ) : (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <div className="whitespace-pre-wrap">{summary}</div>
-              </div>
+              <div
+                className="prose prose-sm dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: summary }}
+              />
             )}
           </div>
         </DialogContent>

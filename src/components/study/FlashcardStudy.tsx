@@ -16,8 +16,8 @@ import {
   Loader2,
   RefreshCw,
 } from "lucide-react";
-import { generateJSONContent } from "@/lib/gemini";
-import { useToast } from "@/hooks/use-toast";
+import { generateJSONContent } from "@/utils/gemini";
+import { toast } from "sonner";
 import { generateId } from "@/lib/storage";
 
 interface FlashcardStudyProps {
@@ -26,7 +26,6 @@ interface FlashcardStudyProps {
 }
 
 export const FlashcardStudy = ({ note, onClose }: FlashcardStudyProps) => {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<FlashcardSession>({
     cards: [],
@@ -42,16 +41,16 @@ export const FlashcardStudy = ({ note, onClose }: FlashcardStudyProps) => {
 
   const generateFlashcards = async () => {
     if (!note.content.trim() && note.timestamps.length === 0) {
-      toast({
-        title: "No content",
+      toast.error("No content", {
         description: "Add some notes or timestamps first to generate flashcards.",
-        variant: "destructive",
       });
       onClose();
       return;
     }
 
     setIsLoading(true);
+    const toastId = toast.loading("Thinking...");
+
     try {
       const contentForAI = `
 Video: ${note.videoTitle}
@@ -61,7 +60,7 @@ Tags: ${note.tags.join(", ")}
       `.trim();
 
       const systemPrompt = "You are an expert educator who creates effective study flashcards. Generate exactly 3 distinct Question & Answer pairs in JSON format only.";
-      const userPrompt = `${systemPrompt}\n\nBased on these notes, generate 3 unique and distinct flashcards for studying. Return ONLY a JSON array with objects containing "question" and "answer" fields. No other text (no markdown code blocks, just raw JSON).\n\nNotes:\n${contentForAI}`;
+      const userPrompt = `${systemPrompt}\n\nBased on these notes, generate 3 unique and distinct flashcards for studying. Return ONLY a JSON array with objects containing "question" and "answer" fields.\n\nNotes:\n${contentForAI}`;
 
       const jsonStr = await generateJSONContent(userPrompt);
 
@@ -89,16 +88,14 @@ Tags: ${note.tags.join(", ")}
         score: { correct: 0, incorrect: 0 },
       });
 
-      toast({
-        title: "Flashcards ready!",
-        description: `Generated ${cards.length} flashcards from your notes.`,
-      });
+      toast.success("Success", { id: toastId });
+      toast.info(`Generated ${cards.length} flashcards`);
+
     } catch (error) {
       console.error("Error generating flashcards:", error);
-      toast({
-        title: "Generation failed",
+      toast.error("Generation failed", {
         description: error instanceof Error ? error.message : "Failed to generate flashcards",
-        variant: "destructive",
+        id: toastId,
       });
     } finally {
       setIsLoading(false);
@@ -106,9 +103,13 @@ Tags: ${note.tags.join(", ")}
   };
 
   const currentCard = session.cards[session.currentIndex];
+  // Calculate progress: completed cards / total cards
   const progress = session.cards.length > 0
-    ? ((session.currentIndex + 1) / session.cards.length) * 100
+    ? ((session.currentIndex + (session.score.correct + session.score.incorrect > session.currentIndex ? 1 : 0)) / session.cards.length) * 100
     : 0;
+  // Actually, standard progress bar is usually simpler:
+  const simpleProgress = session.cards.length > 0 ? ((session.currentIndex + 1) / session.cards.length) * 100 : 0;
+
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -158,7 +159,35 @@ Tags: ${note.tags.join(", ")}
     setIsFlipped(false);
   };
 
-  const isComplete = session.currentIndex === session.cards.length - 1 && session.showAnswer;
+  const isComplete = session.currentIndex === session.cards.length - 1 && session.showAnswer && (session.score.correct + session.score.incorrect === session.cards.length);
+  // Simpler complete check: if we've answered the last card?
+  // Logic in original was: isComplete = session.currentIndex === session.cards.length - 1 && session.showAnswer;
+  // But wait, if they just flipped the last card, they haven't answered "Correct/Incorrect" yet.
+  // We want to show results after they answer the last card.
+  // The original code shows "Incorrect/Correct" buttons when `showAnswer` is true.
+  // So if they are on last card and showAnswer is true, they see buttons.
+  // If they click a button, handleNext is called.
+  // handleNext checks `currentIndex < length - 1`. If not, it does nothing?
+  // Ideally, when they answer the last card, we move to a "complete" state.
+
+  // Let's improve the state to handle "finished".
+  const [isFinished, setIsFinished] = useState(false);
+
+  const handleAnswerImproved = (correct: boolean) => {
+    setSession((prev) => ({
+      ...prev,
+      score: {
+        correct: prev.score.correct + (correct ? 1 : 0),
+        incorrect: prev.score.incorrect + (correct ? 0 : 1),
+      },
+    }));
+
+    if (session.currentIndex < session.cards.length - 1) {
+      handleNext();
+    } else {
+      setIsFinished(true);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -181,6 +210,25 @@ Tags: ${note.tags.join(", ")}
         <p className="text-lg font-medium">No flashcards generated</p>
         <Button onClick={onClose}>Go Back</Button>
       </div>
+    );
+  }
+
+  // Use local isFinished state or derive it
+  if (isFinished) {
+    return (
+      <Card className="p-6 text-center bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 animate-fade-in">
+        <h3 className="text-xl font-bold mb-2">🎉 Study Session Complete!</h3>
+        <p className="text-muted-foreground mb-4">
+          You got {session.score.correct} out of {session.cards.length} correct
+        </p>
+        <div className="flex justify-center gap-4">
+          <Button variant="outline" onClick={() => { setIsFinished(false); handleRestart(); }}>
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Study Again
+          </Button>
+          <Button onClick={onClose}>Done</Button>
+        </div>
+      </Card>
     );
   }
 
@@ -218,7 +266,7 @@ Tags: ${note.tags.join(", ")}
             </Badge>
           </div>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress value={simpleProgress} className="h-2" />
       </div>
 
       {/* Flashcard */}
@@ -264,7 +312,7 @@ Tags: ${note.tags.join(", ")}
               variant="outline"
               size="lg"
               className="border-destructive text-destructive hover:bg-destructive/10"
-              onClick={() => handleAnswer(false)}
+              onClick={() => handleAnswerImproved(false)}
             >
               <X className="w-5 h-5 mr-2" />
               Incorrect
@@ -273,7 +321,7 @@ Tags: ${note.tags.join(", ")}
               variant="outline"
               size="lg"
               className="border-success text-success hover:bg-success/10"
-              onClick={() => handleAnswer(true)}
+              onClick={() => handleAnswerImproved(true)}
             >
               <Check className="w-5 h-5 mr-2" />
               Correct
@@ -284,29 +332,20 @@ Tags: ${note.tags.join(", ")}
         <Button
           variant="outline"
           size="icon"
-          onClick={handleNext}
+          onClick={() => {
+            if (session.currentIndex < session.cards.length - 1) {
+              handleNext();
+            } else if (session.currentIndex === session.cards.length - 1 && !session.showAnswer) {
+              // just flip if next clicked? Or disable? 
+              // Usually right arrow skips card or next. 
+              // Let's just keep next enabled if not last
+            }
+          }}
           disabled={session.currentIndex === session.cards.length - 1}
         >
           <ArrowRight className="w-5 h-5" />
         </Button>
       </div>
-
-      {/* Completion */}
-      {isComplete && (
-        <Card className="p-6 text-center bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
-          <h3 className="text-xl font-bold mb-2">🎉 Study Session Complete!</h3>
-          <p className="text-muted-foreground mb-4">
-            You got {session.score.correct} out of {session.cards.length} correct
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button variant="outline" onClick={handleRestart}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Study Again
-            </Button>
-            <Button onClick={onClose}>Done</Button>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
