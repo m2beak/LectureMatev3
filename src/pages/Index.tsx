@@ -56,7 +56,7 @@ const Index = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isStudyMode, setIsStudyMode] = useState(false);
-  // Default to "notes" to prevent empty states
+  // Fixed: Ensure default tab is always valid string
   const [activeTab, setActiveTab] = useState("notes");
   const { isFocusMode, toggleFocusMode } = useFocusMode();
 
@@ -121,7 +121,6 @@ const Index = () => {
       <div className="flex-1 flex flex-col relative h-screen overflow-hidden">
         {!isFocusMode && <Header />}
 
-        {/* Floating Exit Focus Mode Button */}
         {isFocusMode && (
           <Button
             variant="secondary"
@@ -139,7 +138,6 @@ const Index = () => {
         <main className={`flex-1 overflow-y-auto container mx-auto px-4 py-8 transition-all duration-500 ${isFocusMode ? "max-w-full px-6" : ""}`}>
           {!isEditing ? (
             <div className="space-y-8 animate-fade-in pb-10">
-              {/* Hero Section */}
               <section className="text-center py-12 relative">
                 <div className="absolute inset-0 gradient-bg opacity-5 blur-3xl" />
                 <div className="relative">
@@ -179,18 +177,13 @@ const Index = () => {
               </section>
 
               {user ? (
-                <Tabs
-                  value={activeTab}
-                  onValueChange={(val) => setActiveTab(val)}
-                  className="w-full"
-                >
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
                     <TabsTrigger value="notes">My Notes</TabsTrigger>
                     <TabsTrigger value="analytics">Analytics</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="notes" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {/* Stats Section */}
                     {allNotes.length > 0 && (
                       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <StatsCard
@@ -264,26 +257,10 @@ const Index = () => {
                 </Tabs>
               ) : (
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-6 py-8">
-                  <FeatureCard
-                    icon={Youtube}
-                    title="YouTube Integration"
-                    description="Paste any YouTube video URL and start taking notes instantly."
-                  />
-                  <FeatureCard
-                    icon={Clock}
-                    title="Timestamp Notes"
-                    description="Add timestamps to jump to specific moments in your videos."
-                  />
-                  <FeatureCard
-                    icon={Brain}
-                    title="AI Flashcards"
-                    description="Generate study flashcards from your notes with AI assistance."
-                  />
-                  <FeatureCard
-                    icon={Zap}
-                    title="AI Explanations"
-                    description="Get instant AI explanations for any text you select."
-                  />
+                  <FeatureCard icon={Youtube} title="YouTube Integration" description="Paste any YouTube video URL and start taking notes instantly." />
+                  <FeatureCard icon={Clock} title="Timestamp Notes" description="Add timestamps to jump to specific moments in your videos." />
+                  <FeatureCard icon={Brain} title="AI Flashcards" description="Generate study flashcards from your notes with AI assistance." />
+                  <FeatureCard icon={Zap} title="AI Explanations" description="Get instant AI explanations for any text you select." />
                 </section>
               )}
             </div>
