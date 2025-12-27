@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFocusMode } from "@/contexts/FocusContext";
@@ -8,13 +8,11 @@ import { NotesList } from "@/components/notes/NotesList";
 import { NoteEditor } from "@/components/notes/NoteEditor";
 import { AddVideoDialog } from "@/components/notes/AddVideoDialog";
 import { StatsCard } from "@/components/dashboard/StatsCard";
-import { FlashcardStudy } from "@/components/study/FlashcardStudy";
 import { FolderSidebar } from "@/components/folders/FolderSidebar";
 import { StudyAnalytics } from "@/components/analytics/StudyAnalytics";
-import { PremiumBanner } from "@/components/premium/PremiumBanner";
 import { VideoNote } from "@/types/note";
 import {
-  BookOpen, Clock, Tag, Play, Youtube, Zap, Shield, Brain, LogIn, Crown, Loader2, Minimize2
+  BookOpen, Clock, Tag, Play, Youtube, Loader2, Minimize2, LogIn
 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import { Button } from "@/components/ui/button";
@@ -22,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, isPremium, profile } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
   // Get all data from the hook
   const {
@@ -32,9 +30,6 @@ const Index = () => {
   } = useCloudNotes();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [isStudyMode, setIsStudyMode] = useState(false);
-
-  // FIXED: Initialize with a hardcoded string to prevent "undefined" errors
   const [activeTab, setActiveTab] = useState("notes");
   const { isFocusMode, toggleFocusMode } = useFocusMode();
 
@@ -56,7 +51,6 @@ const Index = () => {
 
   const handleCloseEditor = () => {
     setIsEditing(false);
-    setIsStudyMode(false);
     setCurrentNote(null);
   };
 
@@ -111,21 +105,13 @@ const Index = () => {
               <section className="text-center py-12 relative">
                 <div className="absolute inset-0 gradient-bg opacity-5 blur-3xl" />
                 <div className="relative">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    {isPremium && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-600 text-sm font-medium">
-                        <Crown className="w-4 h-4" />
-                        Premium
-                      </span>
-                    )}
-                  </div>
                   <h1 className="text-4xl md:text-5xl font-bold mb-4">
                     Welcome to{" "}
                     <span className="gradient-text">LectureMate</span>
                   </h1>
                   <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-                    Take smart notes while watching YouTube videos. Add timestamps,
-                    AI flashcards, and sync across devices.
+                    Take smart notes while watching YouTube videos. Add timestamps
+                    and sync across devices.
                   </p>
                   <div className="flex items-center justify-center gap-4">
                     {user ? (
@@ -137,12 +123,6 @@ const Index = () => {
                       </Button>
                     )}
                   </div>
-                  {user && (
-                    <p className="text-sm text-muted-foreground mt-4">
-                      {profile?.aiCallsToday || 0}/5 AI calls used today
-                      {!isPremium && " • Upgrade for unlimited"}
-                    </p>
-                  )}
                 </div>
               </section>
 
@@ -188,10 +168,6 @@ const Index = () => {
                       </section>
                     )}
 
-                    {!isPremium && safeNotes.length > 2 && (
-                      <PremiumBanner variant="compact" />
-                    )}
-
                     <section>
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold">
@@ -220,42 +196,25 @@ const Index = () => {
                   <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* OPTIMIZATION: Only render StudyAnalytics if activeTab is 'analytics' */}
                     {activeTab === 'analytics' && (
-                      <>
-                        <StudyAnalytics />
-                        {!isPremium && (
-                          <div className="mt-8">
-                            <PremiumBanner />
-                          </div>
-                        )}
-                      </>
+                      <StudyAnalytics />
                     )}
                   </TabsContent>
                 </Tabs>
               ) : (
-                <section className="grid grid-cols-1 md:grid-cols-4 gap-6 py-8">
+                <section className="grid grid-cols-1 md:grid-cols-2 gap-6 py-8">
                   <FeatureCard icon={Youtube} title="YouTube Integration" description="Paste any YouTube video URL and start taking notes instantly." />
                   <FeatureCard icon={Clock} title="Timestamp Notes" description="Add timestamps to jump to specific moments in your videos." />
-                  <FeatureCard icon={Brain} title="AI Flashcards" description="Generate study flashcards from your notes with AI assistance." />
-                  <FeatureCard icon={Zap} title="AI Explanations" description="Get instant AI explanations for any text you select." />
                 </section>
               )}
             </div>
           ) : currentNote ? (
-            isStudyMode ? (
-              <FlashcardStudy
-                note={currentNote}
-                onClose={() => setIsStudyMode(false)}
-              />
-            ) : (
-              <NoteEditor
-                note={currentNote}
-                onUpdate={updateNote}
-                onClose={handleCloseEditor}
-                onAddTimestamp={addTimestamp}
-                onRemoveTimestamp={removeTimestamp}
-                onStudyFlashcards={handleStudyFlashcards}
-              />
-            )
+            <NoteEditor
+              note={currentNote}
+              onUpdate={updateNote}
+              onClose={handleCloseEditor}
+              onAddTimestamp={addTimestamp}
+              onRemoveTimestamp={removeTimestamp}
+            />
           ) : null}
         </main>
       </div>
