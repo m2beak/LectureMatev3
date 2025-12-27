@@ -17,7 +17,6 @@ import {
   ArrowLeft,
   Play,
   Trash2,
-  Brain,
   ChevronDown,
   Save,
 } from "lucide-react";
@@ -32,9 +31,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { DictionaryPopup } from "./DictionaryPopup";
-import { AIExplainButton } from "./AIExplainButton";
-import { AISummarizeButton } from "./AISummarizeButton";
-import { QuizMeButton } from "./QuizMeButton";
 
 interface NoteEditorProps {
   note: VideoNote;
@@ -42,7 +38,6 @@ interface NoteEditorProps {
   onClose: () => void;
   onAddTimestamp: (time: number, label: string) => void;
   onRemoveTimestamp: (id: string) => void;
-  onStudyFlashcards: () => void;
 }
 
 export const NoteEditor = ({
@@ -51,7 +46,6 @@ export const NoteEditor = ({
   onClose,
   onAddTimestamp,
   onRemoveTimestamp,
-  onStudyFlashcards,
 }: NoteEditorProps) => {
   const { toast } = useToast();
   const playerRef = useRef<VideoPlayerRef>(null);
@@ -61,19 +55,13 @@ export const NoteEditor = ({
   const [selectedText, setSelectedText] = useState("");
   const [showDictionary, setShowDictionary] = useState(false);
 
-  // Sync local state when note changes, but avoid overwriting while typing if only other fields changed.
-  // We use note.id to reset content when switching notes.
+  // Sync local state when note changes
   useEffect(() => {
     setContent(note.content);
   }, [note.id, note.content]);
-  // Ideally we only depend on note.id if we want total isolation, but if note.content changes externally 
-  // (e.g. initial load or genuine external update), we want it. 
-  // The lag issue is mainly caused by the immediate onUpdate. 
-  // We will keep [note.content] but the debounce will fix the lag.
 
   // Debounce the onUpdate call for content changes
   useEffect(() => {
-    // Avoid triggering update if content matches prop (e.g. after initial sync)
     if (content === note.content) return;
 
     const handler = setTimeout(() => {
@@ -85,7 +73,6 @@ export const NoteEditor = ({
 
   const handleContentChange = (value: string) => {
     setContent(value);
-    // onUpdate is now handled by the debounce effect
   };
 
   const handleAddTimestamp = () => {
@@ -163,7 +150,6 @@ export const NoteEditor = ({
   };
 
   const handleSave = (event: React.MouseEvent<HTMLButtonElement>) => {
-    // Trigger confetti from button position
     const rect = event.currentTarget.getBoundingClientRect();
     const x = (rect.left + rect.width / 2) / window.innerWidth;
     const y = (rect.top + rect.height / 2) / window.innerHeight;
@@ -197,10 +183,6 @@ export const NoteEditor = ({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="gradient" size="sm" onClick={onStudyFlashcards}>
-            <Brain className="w-4 h-4 mr-2" />
-            Flashcards
-          </Button>
           <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
             <Copy className="w-4 h-4 mr-2" />
             Copy
@@ -350,9 +332,6 @@ export const NoteEditor = ({
                   Notes
                 </CardTitle>
                 <div className="flex gap-1">
-                  <AIExplainButton selectedText={selectedText} noteContext={content} />
-                  <QuizMeButton content={selectedText || content} />
-                  <AISummarizeButton note={note} selectedText={selectedText} />
                   <Button
                     variant="ghost"
                     size="sm"
